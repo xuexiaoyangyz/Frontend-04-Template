@@ -1,0 +1,116 @@
+<!-- <!DOCTYPE html> -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>map</title>
+</head>
+<body>
+    <style>
+        .cell{
+            display: inline-block;
+            line-height: 7px;
+            width: 6px;
+            height: 6px;
+            vertical-align: top;
+            background-color: gray;
+            border-bottom: solid 1px white;
+            border-right: solid 1px white;
+        }
+        #container{
+            width: 701px;
+        }
+    </style>
+    <div id='container'></div>
+    <button onclick="localStorage['map'] = JSON.stringify(map)">save</button>
+    <script>
+        let map = localStorage['map']?JSON.parse(localStorage['map']):Array(10000).fill(0)
+        let container = document.getElementById('container')
+        for(let x = 0;x<100;x++){
+            for(let y = 0;y<100;y++){
+                let cell = document.createElement('div')
+                cell.classList.add('cell')
+                if(map[100*x + y]==1){
+                    cell.style.backgroundColor = 'black'
+                }
+                cell.addEventListener('mousemove',()=>{
+                    if(mousemove){
+                        if(clear){
+                            cell.style.backgroundColor = ""
+                            map[100*x+y] = 0
+                        }else{
+                            cell.style.backgroundColor = "black"
+                            map[100*x+y] = 1
+                        }
+                    }
+                })
+                container.appendChild(cell)
+            }
+        }
+        let mousemove= false,clear = false
+        document.addEventListener('mousedown',e=>{
+            mousemove = true
+            clear = (e.which === 3)
+        })
+        document.addEventListener('mouseup',()=>{mousemove = false})
+        document.addEventListener('contextmenu',e=>e.preventDefault());
+
+        function sleep(time){
+            return new Promise(function(resolve){
+                setTimeout(resolve,time)
+            })
+        }
+
+        async function findPath (map,start,end) {
+            let queue = [start]
+            let table = Object.create(map)
+            async function insert(x,y,pre){
+                // 超边界
+                if(x < 0 || x >= 100 || y < 0 || y >= 100)
+                    return
+                if(table[100*x+y])
+                    return
+
+                // await sleep(1);
+                container.children[x*100 +y].style.backgroundColor = 'lightgreen';
+                // map[100*x+y] = 2
+                table[100*x+y] = pre
+                queue.push([x,y])
+            }
+
+            while(queue.length){
+                // 判断是不是终点
+                // debugger
+                let [x,y] = queue.shift(1)
+                // console.log(x,y)
+                if(x === end[0] && y === end[1]){
+                    // return true
+                    debugger
+                    let path = []
+                    while(x != start[0] || y != start[1]){
+                        path.push(map[x*100+y])
+                        console.log(x*100+y)
+                        console.log(table[x*100+y])
+                        // [x,y] = table[x*100+y]
+                        x = table[x*100+y][0]
+                        y = table[x*100+y][1]
+                        await sleep(1);
+                        container.children[x*100+y].style.backgroundColor = 'red'
+                    }
+                    return path
+                }
+                await insert(x,y-1,[x,y])
+                await insert(x-1,y,[x,y])
+                await insert(x,y+1,[x,y])
+                await insert(x+1,y,[x,y])
+
+                // await insert(x-1,y-1,[x,y])
+                // await insert(x-1,y+1,[x,y])
+                // await insert(x+1,y+1,[x,y])
+                // await insert(x+1,y-1,[x,y])
+            }
+        }
+    </script>
+</body>
+</html>
